@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+
+  sulfonates_backend:
+    image: 'descriptor-backend:latest'
+    environment:
+      POSTGRES_SERVER: descriptor_database
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWD: "${POSTGRES_PASSWD:?is not set, expected from ../.env.secrets via the .env link in this folder}"
+      POSTGRES_DB: sulfonates_data
+      API_PREFIX: sulfonates
+    entrypoint: bash prestart.sh
+    networks:
+      - external_network
+      - descriptor-libraries-internal
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.descriptor_libraries-sulfonates_backend.loadbalancer.server.port=8080
+      - "traefik.http.routers.descriptor_libraries-sulfonates_backend.rule=(Host(`descriptor-libraries.molssi.org`) && PathPrefix(`/api/sulfonates`))"
+      - traefik.http.routers.descriptor_libraries-sulfonates_backend.entrypoints=websecure
+      - traefik.http.routers.descriptor_libraries-sulfonates_backend.tls.certresolver=letsencrypt
+
+  sulfonates_frontend:
+    image: 'descriptor-frontend:edges'
+    volumes:
+      - "./public:/app/public"
+    environment:
+      - VITE_BASE_URL=/sulfonates
+    networks:
+      - external_network
+    entrypoint: ash renameBase.sh
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.descriptor_libraries-frontend-sulfonates.rule=(Host(`descriptor-libraries.molssi.org`) && PathPrefix(`/sulfonates`))"
+      - "traefik.http.services.descriptor_libraries-frontend-sulfonates.loadbalancer.server.port=3000"
+      - traefik.http.routers.descriptor_libraries-frontend-sulfonates.entrypoints=websecure
+      - traefik.http.routers.descriptor_libraries-frontend-sulfonates.tls.certresolver=letsencrypt
+
+networks:
+  external_network:
+    # external = handled outside of this docker compose
+    name: docker_main_net
+    external: true
+  descriptor-libraries-internal:
+    external: true
