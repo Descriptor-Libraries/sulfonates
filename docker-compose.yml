@@ -3,7 +3,7 @@ version: '3'
 services:
 
   sulfonates_backend:
-    image: 'descriptor-backend:latest'
+    image: "${BACKEND_IMAGE:?is not set; deploy with ../scripts/deploy-library.sh}"
     environment:
       POSTGRES_SERVER: descriptor_database
       POSTGRES_USER: postgres
@@ -22,7 +22,7 @@ services:
       - traefik.http.routers.descriptor_libraries-sulfonates_backend.tls.certresolver=letsencrypt
 
   sulfonates_frontend:
-    image: 'descriptor-frontend:edges'
+    image: "${FRONTEND_IMAGE:?is not set; deploy with ../scripts/deploy-library.sh}"
     volumes:
       - "./public:/app/public"
     environment:
